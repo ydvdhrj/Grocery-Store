@@ -1,4 +1,4 @@
-from sql_connection import get_sql_connection
+from backend.sql_connection import get_sql_connection
 import psycopg2
 
 def get_uoms(connection):
