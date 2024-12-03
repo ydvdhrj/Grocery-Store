@@ -18,8 +18,9 @@ def init_db():
     
     try:
         print("Creating tables...")
-        # Read schema.sql file
-        with open('schema.sql', 'r') as f:
+        # Read schema.sql file from the same directory as this script
+        schema_path = os.path.join(os.path.dirname(__file__), 'schema.sql')
+        with open(schema_path, 'r') as f:
             schema = f.read()
         
         # Execute schema
