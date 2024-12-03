@@ -66,39 +66,56 @@ def check_auth():
 
 @app.route('/api/login', methods=['POST'])
 def api_login():
-    data = request.get_json()
-    email = data.get('email')
-    password = data.get('password')
-    
-    connection = get_db()
-    user_data, error = users_dao.verify_user(connection, email, password)
-    
-    if error:
-        return jsonify({'message': error}), 401
-    
-    user = User(user_data)
-    login_user(user)
-    return jsonify({
-        'message': 'Login successful',
-        'user': {
-            'name': user.name,
-            'email': user.email
-        }
-    }), 200
+    try:
+        data = request.get_json()
+        email = data.get('email')
+        password = data.get('password')
+        
+        if not email or not password:
+            return jsonify({'message': 'Email and password are required'}), 400
+        
+        connection = get_db()
+        user_data, error = users_dao.verify_user(connection, email, password)
+        
+        if error:
+            logger.error(f"Login error: {error}")
+            return jsonify({'message': error}), 401
+        
+        user = User(user_data)
+        login_user(user)
+        return jsonify({
+            'message': 'Login successful',
+            'user': {
+                'name': user.name,
+                'email': user.email
+            }
+        }), 200
+    except Exception as e:
+        logger.error(f"Unexpected login error: {e}")
+        return jsonify({'message': 'Internal server error'}), 500
 
 @app.route('/api/register', methods=['POST'])
 def api_register():
-    data = request.get_json()
-    name = data.get('name')
-    email = data.get('email')
-    password = data.get('password')
-    
-    connection = get_db()
-    success, message = users_dao.create_user(connection, name, email, password)
-    
-    if success:
-        return jsonify({'message': message}), 200
-    return jsonify({'message': message}), 400
+    try:
+        data = request.get_json()
+        name = data.get('name')
+        email = data.get('email')
+        password = data.get('password')
+        
+        if not name or not email or not password:
+            return jsonify({'message': 'All fields are required'}), 400
+        
+        connection = get_db()
+        success, message = users_dao.create_user(connection, name, email, password)
+        
+        if success:
+            return jsonify({'message': message}), 200
+        
+        logger.error(f"Registration error: {message}")
+        return jsonify({'message': message}), 400
+    except Exception as e:
+        logger.error(f"Unexpected registration error: {e}")
+        return jsonify({'message': 'Internal server error'}), 500
 
 @app.route('/api/logout')
 @login_required
