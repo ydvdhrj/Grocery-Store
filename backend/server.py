@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import backend.sql_connection as sql_connection
 import backend.products_dao as products_dao
@@ -86,7 +86,7 @@ def delete_product():
 
 @app.route('/', methods=['GET'])
 def root_to_get_uom():
-    return get_uom()
+    return render_template('index.html')
 
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 10000))
