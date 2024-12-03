@@ -1,13 +1,12 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from backend.sql_connection import get_sql_connection
-import json
-import os
-import logging
-
+import backend.sql_connection as sql_connection
 import backend.products_dao as products_dao
 import backend.orders_dao as orders_dao
 import backend.uom_dao as uom_dao
+import json
+import os
+import logging
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -18,7 +17,7 @@ CORS(app)
 
 def get_db():
     try:
-        return get_sql_connection()
+        return sql_connection.get_sql_connection()
     except Exception as e:
         logger.error(f"Database connection error: {e}")
         raise
