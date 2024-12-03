@@ -23,6 +23,10 @@ def get_db():
         raise
 
 @app.route('/getUOM', methods=['GET'])
+def get_uom_data():
+    return get_uom()
+
+@app.route('/getUOMData', methods=['GET'])
 def get_uom():
     try:
         connection = get_db()
@@ -85,7 +89,7 @@ def delete_product():
         return jsonify({"error": str(e)}), 500
 
 @app.route('/', methods=['GET'])
-def root_to_get_uom():
+def home():
     return render_template('index.html')
 
 if __name__ == "__main__":
