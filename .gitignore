@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Additional exclusions
+.env
+__pycache__/
+*.pyc
+.DS_Store
