@@ -85,8 +85,8 @@ def delete_product():
         return jsonify({"error": str(e)}), 500
 
 @app.route('/', methods=['GET'])
-def health_check():
-    return jsonify({"status": "healthy"}), 200
+def root_to_get_uom():
+    return get_uom()
 
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 10000))
