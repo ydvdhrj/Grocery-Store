@@ -88,6 +88,14 @@ def delete_product():
         logger.error(f"Error in delete_product: {e}")
         return jsonify({"error": str(e)}), 500
 
+@app.route('/products', methods=['GET'])
+def products_page():
+    return render_template('products.html')
+
+@app.route('/orders', methods=['GET'])
+def orders_page():
+    return render_template('orders.html')
+
 @app.route('/', methods=['GET'])
 def home():
     return render_template('index.html')
