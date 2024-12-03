@@ -5,9 +5,9 @@ import json
 import os
 import logging
 
-import products_dao
-import orders_dao
-import uom_dao
+import backend.products_dao as products_dao
+import backend.orders_dao as orders_dao
+import backend.uom_dao as uom_dao
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
