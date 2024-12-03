@@ -1,5 +1,6 @@
-from backend.sql_connection import get_sql_connection
+from .sql_connection import get_sql_connection
 import bcrypt
+import psycopg2
 
 def create_user(connection, name, email, password):
     try:

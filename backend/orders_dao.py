@@ -1,6 +1,6 @@
-from datetime import datetime
 from backend.sql_connection import get_sql_connection
 import psycopg2
+from datetime import datetime
 
 def get_all_orders(connection):
     cursor = connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)

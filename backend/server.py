@@ -1,20 +1,20 @@
 from flask import Flask, request, jsonify, send_from_directory, session
 from flask_cors import CORS
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
-import backend.sql_connection as sql_connection
-import backend.products_dao as products_dao
-import backend.orders_dao as orders_dao
-import backend.uom_dao as uom_dao
-import backend.users_dao as users_dao
+from backend import sql_connection
+from backend import products_dao
+from backend import orders_dao
+from backend import uom_dao
+from backend import users_dao
 import json
 import os
 import logging
 
 logger = logging.getLogger(__name__)
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='../ui')
 CORS(app)
-app.secret_key = 'your-secret-key'  # Change this to a secure secret key
+app.secret_key = os.environ.get('SECRET_KEY', 'default-secret-key')
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -46,11 +46,11 @@ def get_db():
 
 @app.route('/')
 def serve_ui():
-    return send_from_directory('ui', 'login.html')
+    return send_from_directory('../ui', 'login.html')
 
 @app.route('/<path:path>')
 def serve_static(path):
-    return send_from_directory('ui', path)
+    return send_from_directory('../ui', path)
 
 @app.route('/api/check-auth')
 def check_auth():
@@ -176,5 +176,8 @@ def get_uom():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    port = int(os.environ.get('PORT', 10000))
+    port = int(os.environ.get('PORT', 5000))
+    print(f"Starting server on port {port}")
+    print(f"Static folder: {app.static_folder}")
+    print(f"Current working directory: {os.getcwd()}")
     app.run(host='0.0.0.0', port=port, debug=True)
