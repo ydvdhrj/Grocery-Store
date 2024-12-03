@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from sql_connection import get_sql_connection
+from backend.sql_connection import get_sql_connection
 import json
 import os
 import logging
