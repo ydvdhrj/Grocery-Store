@@ -1,21 +1,123 @@
 var productPrices = {};
 
-$(function () {
-    //Json data by api call for order table
-    $.get(productListApiUrl, function (response) {
-        productPrices = {}
-        if(response) {
-            var options = '<option value="">--Select--</option>';
-            $.each(response, function(index, product) {
-                options += '<option value="'+ product.product_id +'">'+ product.name +'</option>';
-                productPrices[product.product_id] = product.price_per_unit;
-            });
-            $(".product-box").find("select").empty().html(options);
+document.addEventListener('DOMContentLoaded', async function() {
+    // Check authentication
+    if (!await checkAuth()) return;
+
+    let products = [];
+    let orderItems = [];
+
+    try {
+        // Load products
+        products = await callApi(API_ENDPOINTS.GET_PRODUCTS);
+        
+        // Populate product dropdown
+        const productSelect = document.getElementById('product');
+        products.forEach(product => {
+            const option = document.createElement('option');
+            option.value = product.product_id;
+            option.textContent = product.name;
+            productSelect.appendChild(option);
+            productPrices[product.product_id] = product.price_per_unit;
+        });
+
+        // Load existing orders
+        const orders = await callApi(API_ENDPOINTS.GET_ORDERS);
+        const tbody = document.querySelector('#ordersTable tbody');
+        tbody.innerHTML = '';
+        orders.forEach(order => {
+            const row = tbody.insertRow();
+            row.innerHTML = `
+                <td>${order.order_id}</td>
+                <td>${order.customer_name}</td>
+                <td>${formatCurrency(order.total)}</td>
+                <td>${formatDate(order.order_date)}</td>
+            `;
+        });
+    } catch (error) {
+        showError('Failed to load data: ' + error.message);
+    }
+
+    // Handle adding items to order
+    document.getElementById('addToOrder').addEventListener('click', function() {
+        const productId = parseInt(document.getElementById('product').value);
+        const quantity = parseFloat(document.getElementById('quantity').value);
+        
+        if (!productId || !quantity) {
+            showError('Please select a product and enter quantity');
+            return;
+        }
+
+        const product = products.find(p => p.product_id === productId);
+        if (!product) {
+            showError('Product not found');
+            return;
+        }
+
+        const total = quantity * product.price_per_unit;
+        orderItems.push({
+            product_id: productId,
+            quantity: quantity,
+            total_price: total
+        });
+
+        // Update order items table
+        const itemsBody = document.querySelector('#orderItemsTable tbody');
+        const row = itemsBody.insertRow();
+        row.innerHTML = `
+            <td>${product.name}</td>
+            <td>${quantity}</td>
+            <td>${formatCurrency(product.price_per_unit)}</td>
+            <td>${formatCurrency(total)}</td>
+            <td><button onclick="this.closest('tr').remove(); updateTotal();" class="btn btn-danger">Remove</button></td>
+        `;
+
+        // Reset form
+        document.getElementById('quantity').value = '';
+        updateTotal();
+    });
+
+    // Handle order submission
+    document.getElementById('orderForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        if (orderItems.length === 0) {
+            showError('Please add items to the order');
+            return;
+        }
+
+        const orderData = {
+            customer_name: document.getElementById('customerName').value,
+            total: calculateTotal(),
+            order_details: orderItems
+        };
+
+        try {
+            await callApi(API_ENDPOINTS.INSERT_ORDER, 'POST', orderData);
+            showSuccess('Order placed successfully');
+            window.location.reload();
+        } catch (error) {
+            showError('Failed to place order: ' + error.message);
         }
     });
 });
 
-$("#addMoreButton").click(function () {
+function updateTotal() {
+    const total = calculateTotal();
+    document.getElementById('totalAmount').textContent = formatCurrency(total);
+}
+
+function calculateTotal() {
+    let total = 0;
+    document.querySelectorAll('#orderItemsTable tbody tr').forEach(row => {
+        const cells = row.cells;
+        total += parseFloat(cells[3].textContent.replace(/[^0-9.-]+/g, ''));
+    });
+    return total;
+}
+
+// Add more button click event
+document.getElementById('addMoreButton').addEventListener('click', function() {
     var row = $(".product-box").html();
     $(".product-box-extra").append(row);
     $(".product-box-extra .remove-row").last().removeClass('hideit');
@@ -24,11 +126,13 @@ $("#addMoreButton").click(function () {
     $(".product-box-extra .product-total").last().text('0.0');
 });
 
+// Remove row click event
 $(document).on("click", ".remove-row", function (){
     $(this).closest('.row').remove();
     calculateValue();
 });
 
+// Cart product change event
 $(document).on("change", ".cart-product", function (){
     var product_id = $(this).val();
     var price = productPrices[product_id];
@@ -37,11 +141,13 @@ $(document).on("change", ".cart-product", function (){
     calculateValue();
 });
 
+// Product quantity change event
 $(document).on("change", ".product-qty", function (e){
     calculateValue();
 });
 
-$("#saveOrder").on("click", function(){
+// Save order click event
+document.getElementById('saveOrder').addEventListener('click', function(){
     var formData = $("form").serializeArray();
     var requestPayload = {
         customer_name: null,

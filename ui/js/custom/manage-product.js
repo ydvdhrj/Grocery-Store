@@ -1,76 +1,87 @@
-var productModal = $("#productModal");
-    $(function () {
+document.addEventListener('DOMContentLoaded', async function() {
+    // Check authentication
+    if (!await checkAuth()) return;
 
-        //JSON data by API call
-        $.get(productListApiUrl, function (response) {
-            if(response) {
-                var table = '';
-                $.each(response, function(index, product) {
-                    table += '<tr data-id="'+ product.product_id +'" data-name="'+ product.name +'" data-unit="'+ product.uom_id +'" data-price="'+ product.price_per_unit +'">' +
-                        '<td>'+ product.name +'</td>'+
-                        '<td>'+ product.uom_name +'</td>'+
-                        '<td>'+ product.price_per_unit +'</td>'+
-                        '<td><span class="btn btn-xs btn-danger delete-product">Delete</span></td></tr>';
-                });
-                $("table").find('tbody').empty().html(table);
-            }
+    // Load UOM and products data
+    try {
+        const [uomList, products] = await Promise.all([
+            callApi(API_ENDPOINTS.GET_UOM),
+            callApi(API_ENDPOINTS.GET_PRODUCTS)
+        ]);
+
+        // Populate UOM dropdown
+        const uomSelect = document.getElementById('uoms');
+        uomList.forEach(uom => {
+            const option = document.createElement('option');
+            option.value = uom.uom_id;
+            option.textContent = uom.uom_name;
+            uomSelect.appendChild(option);
         });
-    });
 
-    // Save Product
-    $("#saveProduct").on("click", function () {
-        // If we found id value in form then update product detail
-        var data = $("#productForm").serializeArray();
-        var requestPayload = {
-            product_name: null,
-            uom_id: null,
-            price_per_unit: null
+        // Populate products table
+        const tbody = document.querySelector('#productsTable tbody');
+        tbody.innerHTML = '';
+        products.forEach(product => {
+            const row = tbody.insertRow();
+            row.dataset.id = product.product_id;
+            row.dataset.name = product.name;
+            row.dataset.unit = product.uom_id;
+            row.dataset.price = product.price_per_unit;
+            row.innerHTML = `
+                <td>${product.name}</td>
+                <td>${uomList.find(u => u.uom_id === product.uom_id)?.uom_name || ''}</td>
+                <td>${formatCurrency(product.price_per_unit)}</td>
+                <td>
+                    <button onclick="deleteProduct(${product.product_id})" class="btn btn-danger delete-product">Delete</button>
+                </td>
+            `;
+        });
+    } catch (error) {
+        showError('Failed to load data: ' + error.message);
+    }
+
+    // Handle product form submission
+    document.getElementById('productForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const productData = {
+            name: document.getElementById('name').value,
+            uom_id: parseInt(document.getElementById('uoms').value),
+            price_per_unit: parseFloat(document.getElementById('price').value)
         };
-        for (var i=0;i<data.length;++i) {
-            var element = data[i];
-            switch(element.name) {
-                case 'name':
-                    requestPayload.product_name = element.value;
-                    break;
-                case 'uoms':
-                    requestPayload.uom_id = element.value;
-                    break;
-                case 'price':
-                    requestPayload.price_per_unit = element.value;
-                    break;
-            }
-        }
-        callApi("POST", productSaveApiUrl, {
-            'data': JSON.stringify(requestPayload)
-        });
-    });
 
-    $(document).on("click", ".delete-product", function (){
-        var tr = $(this).closest('tr');
-        var data = {
-            product_id : tr.data('id')
-        };
-        var isDelete = confirm("Are you sure to delete "+ tr.data('name') +" item?");
-        if (isDelete) {
-            callApi("POST", productDeleteApiUrl, data);
+        try {
+            await callApi(API_ENDPOINTS.INSERT_PRODUCT, 'POST', productData);
+            showSuccess('Product added successfully');
+            window.location.reload();
+        } catch (error) {
+            showError('Failed to add product: ' + error.message);
         }
     });
 
-    productModal.on('hide.bs.modal', function(){
-        $("#id").val('0');
-        $("#name, #unit, #price").val('');
-        productModal.find('.modal-title').text('Add New Product');
+    // Handle product modal
+    const productModal = document.getElementById('productModal');
+    productModal.addEventListener('hide.bs.modal', function(){
+        document.getElementById('id').value = '0';
+        document.getElementById('name').value = '';
+        document.getElementById('uoms').value = '';
+        document.getElementById('price').value = '';
+        productModal.querySelector('.modal-title').textContent = 'Add New Product';
     });
 
-    productModal.on('show.bs.modal', function(){
-        //JSON data by API call
-        $.get(uomListApiUrl, function (response) {
-            if(response) {
-                var options = '<option value="">--Select--</option>';
-                $.each(response, function(index, uom) {
-                    options += '<option value="'+ uom.uom_id +'">'+ uom.uom_name +'</option>';
-                });
-                $("#uoms").empty().html(options);
-            }
-        });
+    productModal.addEventListener('show.bs.modal', function(){
+        // No need to load UOM list again
     });
+});
+
+async function deleteProduct(productId) {
+    if (!confirm('Are you sure you want to delete this product?')) return;
+
+    try {
+        await callApi(API_ENDPOINTS.DELETE_PRODUCT, 'POST', { product_id: productId });
+        showSuccess('Product deleted successfully');
+        window.location.reload();
+    } catch (error) {
+        showError('Failed to delete product: ' + error.message);
+    }
+}
