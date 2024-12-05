@@ -5,7 +5,7 @@ from datetime import datetime
 def get_all_orders(connection):
     cursor = connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     query = """
-        SELECT o.order_id, o.customer_name, o.total, o.datetime,
+        SELECT o.order_id, o.customer_name, o.total, o.order_date,
             od.product_id, od.quantity, od.total_price,
             p.name, p.price_per_unit
         FROM orders o
@@ -23,7 +23,7 @@ def get_all_orders(connection):
             response[order_id] = {
                 'order_id': record['order_id'],
                 'customer_name': record['customer_name'],
-                'order_date': record['datetime'],
+                'order_date': record['order_date'],
                 'total': float(record['total']),
                 'order_details': []
             }
@@ -41,38 +41,43 @@ def get_all_orders(connection):
 def insert_order(connection, order):
     cursor = connection.cursor()
     
-    # Insert into orders table
-    order_query = """
-        INSERT INTO orders (customer_name, total)
-        VALUES (%s, %s)
-        RETURNING order_id
-    """
-    order_data = (order['customer_name'], order['grand_total'])
-    
-    cursor.execute(order_query, order_data)
-    order_id = cursor.fetchone()[0]
-    
-    # Insert order details
-    order_details_query = """
-        INSERT INTO order_details (order_id, product_id, quantity, total_price)
-        VALUES (%s, %s, %s, %s)
-    """
-    
-    order_details_data = []
-    for order_detail in order['order_details']:
-        order_details_data.append([
-            order_id,
-            int(order_detail['product_id']),
-            float(order_detail['quantity']),
-            float(order_detail['total_price'])
-        ])
-    
-    cursor.executemany(order_details_query, order_details_data)
-    
-    connection.commit()
-    cursor.close()
-    
-    return order_id
+    try:
+        # Insert into orders table
+        order_query = """
+            INSERT INTO orders (customer_name, total, user_id)
+            VALUES (%s, %s, %s)
+            RETURNING order_id
+        """
+        user_id = order.get('user_id')  # Get user_id if provided
+        order_data = (order['customer_name'], order['grand_total'], user_id)
+        
+        cursor.execute(order_query, order_data)
+        order_id = cursor.fetchone()[0]
+        
+        # Insert order details
+        order_details_query = """
+            INSERT INTO order_details (order_id, product_id, quantity, total_price)
+            VALUES (%s, %s, %s, %s)
+        """
+        
+        order_details_data = []
+        for order_detail in order['order_details']:
+            order_details_data.append([
+                order_id,
+                int(order_detail['product_id']),
+                float(order_detail['quantity']),
+                float(order_detail['total_price'])
+            ])
+            
+        cursor.executemany(order_details_query, order_details_data)
+        
+        connection.commit()
+        return order_id
+    except Exception as e:
+        connection.rollback()
+        raise e
+    finally:
+        cursor.close()
 
 if __name__ == '__main__':
     connection = get_sql_connection()

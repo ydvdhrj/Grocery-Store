@@ -21,10 +21,12 @@ def create_users_table():
         # SQL to create users table
         create_table_query = """
         CREATE TABLE IF NOT EXISTS users (
-            id SERIAL PRIMARY KEY,
+            id INT NOT NULL AUTO_INCREMENT,
             name VARCHAR(100) NOT NULL,
-            email VARCHAR(100) UNIQUE NOT NULL,
-            password_hash VARCHAR(255) NOT NULL
+            email VARCHAR(100) NOT NULL UNIQUE,
+            password_hash VARCHAR(100) NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id)
         );
         """
         
