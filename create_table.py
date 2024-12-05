@@ -1,13 +1,19 @@
 import os
 import psycopg2
+from dotenv import load_dotenv
 
-# Set the database URL
-DATABASE_URL = 'postgresql://grocery_store_18ec_user:JhC7r8dc959vtGdUprCEJPatiMIDdrHu@dpg-ct7apsbtq21c73blhkm0-a/grocery_store_18ec'
+# Load environment variables
+load_dotenv()
+
+# Get database URL from environment variable
+DB_URL = os.getenv('DB_URL')
+if not DB_URL:
+    raise ValueError("DB_URL environment variable is not set")
 
 def create_users_table():
     try:
         # Establish connection
-        connection = psycopg2.connect(DATABASE_URL)
+        connection = psycopg2.connect(DB_URL)
         
         # Create a cursor
         cursor = connection.cursor()

@@ -7,13 +7,13 @@ load_dotenv()
 
 def init_db():
     # Get database URL from environment variable
-    DATABASE_URL = os.getenv('DATABASE_URL')
+    DB_URL = os.getenv('DB_URL')
     
-    if not DATABASE_URL:
-        raise Exception("DATABASE_URL environment variable is not set")
+    if not DB_URL:
+        raise Exception("DB_URL environment variable is not set")
     
     print("Connecting to database...")
-    conn = psycopg2.connect(DATABASE_URL)
+    conn = psycopg2.connect(DB_URL)
     cur = conn.cursor()
     
     try:

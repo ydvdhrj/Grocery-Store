@@ -1,5 +1,10 @@
 import requests
 import re
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 def validate_render_postgres_url(url):
     # Regular expression to parse PostgreSQL connection URL
@@ -35,23 +40,28 @@ def check_render_database_status(host):
         print(f"Error checking database status: {e}")
 
 def main():
-    # Hardcoded database URL from .env.example
-    DATABASE_URL = 'postgresql://grocery_store_18ec_user:JhC7r8dc959vtGdUprCEJPatiMIDdrHu@dpg-ct7apsbtq21c73blhkm0-a/grocery_store_18ec'
-    
-    print("Validating Database Connection Details:")
-    print("-" * 40)
-    
-    # Validate URL format
-    if validate_render_postgres_url(DATABASE_URL):
-        print("\nURL Format: Valid")
-    else:
-        print("\nURL Format: Invalid")
-    
-    # Extract host for status check
-    host_match = re.search(r'@([^/]+)/', DATABASE_URL)
-    if host_match:
-        host = host_match.group(1)
-        check_render_database_status(host)
+    try:
+        # Get database URL from environment variable
+        DB_URL = os.getenv('DB_URL')
+        if not DB_URL:
+            raise ValueError("DB_URL environment variable is not set")
+            
+        print("Validating Database Connection Details:")
+        print("-" * 40)
+        
+        # Validate URL format
+        if validate_render_postgres_url(DB_URL):
+            print("\nURL Format: Valid")
+        else:
+            print("\nURL Format: Invalid")
+        
+        # Extract host for status check
+        host_match = re.search(r'@([^/]+)/', DB_URL)
+        if host_match:
+            host = host_match.group(1)
+            check_render_database_status(host)
+    except Exception as e:
+        print(f"Error validating database URL: {e}")
 
 if __name__ == "__main__":
     main()

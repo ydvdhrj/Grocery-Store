@@ -3,14 +3,20 @@ import psycopg2
 import socket
 import ssl
 from urllib.parse import urlparse
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 def check_users_table():
-    # Hardcoded database URL
-    DATABASE_URL = 'postgresql://grocery_store_18ec_user:JhC7r8dc959vtGdUprCEJPatiMIDdrHu@dpg-ct7apsbtq21c73blhkm0-a/grocery_store_18ec'
-    
     try:
+        # Get database URL from environment variable
+        DB_URL = os.getenv('DB_URL')
+        if not DB_URL:
+            raise ValueError("DB_URL environment variable is not set")
+        
         # Parse the URL
-        url_parts = urlparse(DATABASE_URL)
+        url_parts = urlparse(DB_URL)
         
         # Attempt to resolve hostname using socket
         print(f"Attempting to resolve: {url_parts.hostname}")
@@ -41,7 +47,7 @@ def check_users_table():
             
             # Establish connection
             connection = psycopg2.connect(
-                DATABASE_URL,
+                DB_URL,
                 sslcontext=ssl_context,
                 connect_timeout=10
             )

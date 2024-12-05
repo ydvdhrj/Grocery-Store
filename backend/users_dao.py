@@ -3,6 +3,7 @@ import bcrypt
 import psycopg2
 
 def create_user(connection, name, email, password):
+    cursor = None
     try:
         # Validate input
         if not name or not email or not password:
@@ -46,6 +47,7 @@ def create_user(connection, name, email, password):
             cursor.close()
 
 def verify_user(connection, email, password):
+    cursor = None
     try:
         # Validate input
         if not email or not password:

@@ -21,7 +21,7 @@ def check_environment_variables():
     else:
         print("WARNING: No .env or .env.example file found!")
     
-    required_vars = ['DATABASE_URL', 'SECRET_KEY']
+    required_vars = ['DB_URL', 'SECRET_KEY']
     for var in required_vars:
         value = os.getenv(var)
         print(f"{var}: {'SET' if value else 'NOT SET'}")
@@ -31,16 +31,16 @@ def check_environment_variables():
 def test_database_connection():
     print("\nTesting Database Connection:")
     try:
-        DATABASE_URL = os.getenv('DATABASE_URL')
-        if not DATABASE_URL:
-            print("ERROR: DATABASE_URL is not set")
+        DB_URL = os.getenv('DB_URL')
+        if not DB_URL:
+            print("ERROR: DB_URL is not set")
             return False
         
-        print(f"Attempting to connect to: {DATABASE_URL}")
+        print(f"Attempting to connect to: {DB_URL}")
         
         # Detailed connection parsing
         from urllib.parse import urlparse
-        parsed_url = urlparse(DATABASE_URL)
+        parsed_url = urlparse(DB_URL)
         
         print("Connection Details:")
         print(f"  Scheme: {parsed_url.scheme}")
@@ -48,7 +48,7 @@ def test_database_connection():
         print(f"  Path: {parsed_url.path}")
         print(f"  Username: {parsed_url.username}")
         
-        connection = psycopg2.connect(DATABASE_URL)
+        connection = psycopg2.connect(DB_URL)
         cursor = connection.cursor()
         
         # Test basic query

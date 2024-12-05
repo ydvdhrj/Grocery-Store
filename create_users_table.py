@@ -2,6 +2,8 @@ from backend.sql_connection import get_sql_connection
 import psycopg2
 
 def create_users_table():
+    cursor = None
+    connection = None
     try:
         # Establish connection
         connection = get_sql_connection()
@@ -34,6 +36,8 @@ def create_users_table():
         # Close cursor and connection
         if cursor:
             cursor.close()
+        if connection:
+            connection.close()
 
 if __name__ == "__main__":
     create_users_table()
