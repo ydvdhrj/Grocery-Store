@@ -29,6 +29,9 @@ def create_user(connection, name, email, password):
         salt = bcrypt.gensalt()
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), salt)
         
+        # Convert hashed_password to bytes
+        hashed_password = bytes(hashed_password)
+        
         # Insert new user
         query = """INSERT INTO users (name, email, password_hash)
                   VALUES (%s, %s, %s)"""
